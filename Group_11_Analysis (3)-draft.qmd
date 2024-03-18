@@ -1,0 +1,121 @@
+---
+title: "Write yout TITLE"
+execute: 
+  echo: false
+  eval: true
+number-sections: true
+format:
+  html:
+    embed-resources: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+library(readr)
+library(ggplot2)
+library(ggfortify)
+library(tidyverse)
+library(tidymodels)
+library(gt)
+library(MASS)
+library(patchwork)
+library(moderndive)
+```
+
+# Introduction {#sec-intro}
+
+# Exploratory Analysis {#sec-EA}
+
+```{r}
+Measles <- read.csv('DAProject14.csv')
+```
+
+```{r}
+measles <- Measles |>
+  mutate(Measles, prop = (Y / N) * 100) |>
+   round(2)
+```
+
+```{r}
+#| label: tbl-sum
+#| tbl-cap: Mean, median and standard deviation of the proportion of pre-school children susceptible to measles
+#| message: false
+
+measles.sum <- measles |>
+  group_by(Year) |>
+   summarise(Mean = mean(prop), Median = median(prop), SD = sd(prop)) |>
+    gt() |>
+  fmt_number(columns = c('Mean', 'Median', 'SD'), decimals = 2)
+measles.sum
+```
+
+@tbl-sum displays the mean, median and standard deviation of the proportion of pre-school children in Edinburgh who are susceptible to measles for each of the even years from 1998 to 2014. We can see that the average proportion of pre-school children with measles appears to be higher for the earlier years, peaking in 2004, and then decreases as the years progress. Furthermore, the variability of the proportion of children with measles also appears to be higher for the earlier years and then decreases as the years progress. RELATE TO QUESTIONS OF INTEREST
+
+```{r}
+#| label: fig-box
+#| message: false
+ggplot(measles, aes(x = factor(Year), y = prop)) +
+  geom_boxplot(fill = 'skyblue') +
+   labs(x = 'Year', y = 'Proportion', title = 'Proportion of pre-school children in Edinburgh susceptible to measles by year') +
+    scale_x_discrete(labels = c('1998', '2000', '2002', '2004', '2006', '2008', '2010', '2012', '2014'))
+```
+
+@fig-box displays the boxplots of the proportion of pre-school children in Edinburgh susceptible to measles for each of the even years from 1998 to 2014. We can see that the median proportion is around 15 from 1998 to 2006 and then it decreases until the proportion becomes around 8 in 2014. It also appears that the range of values from the year 1998 to 2004 is larger than the range of values from the year 2006 to 2014. Furthermore, it can be seen that the distribution of values for each of the years appear to be fairly symmetric. *RELATE TO QUESTIONS OF INTEREST*
+
+# Formal Analysis {#sec-FA}
+
+The linear regression model that is fitted is as follows:
+
+$$
+\widehat{y}_{i} = \widehat\alpha + \widehat\beta(x_{i}) + \epsilon_{i}
+$$
+
+where
+
+-   $\epsilon_{i}\thicksim\mathbf{N}(0,\sigma^2)$
+
+-   $\widehat\alpha$ is the intercept of the regression line
+
+-   $\widehat\beta$ is the slope of the regression line
+
+-   $x_{i}$ is the driving distance
+
+```{r}
+lm(formula = prop ~ Year, data = measles)
+```
+
+```{r}
+model <- linear_reg() |>
+  fit(prop ~ factor(Year), data = measles)
+model1 <- linear_reg() |>
+  fit(prop ~ Year, data = measles)
+model1
+get_regression_table(model1)
+```
+
+```{r}
+slr.model <- linear_reg()
+slr.model <- slr.model |>
+  fit(prop ~ Year, data = measles) |>
+extract_fit_engine()
+get_regression_table(slr.model)
+```
+
+```{r}
+measles.2004 <- measles |>
+dplyr::filter(Year == 2004)
+```
+
+```{r}
+slr.model2 <- linear_reg()
+slr.model2 <- slr.model2 |>
+  fit(prop ~ factor(Year), data = measles) |>
+extract_fit_engine()
+get_regression_table(slr.model2)
+```
+
+# Conclusions {#sec-con}
